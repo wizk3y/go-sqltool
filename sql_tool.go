@@ -37,6 +37,7 @@ type SQLTool struct {
 	dateTimeUnit              string
 	autoCreateDateTimeColumns map[string]bool
 	autoUpdateDateTimeColumns map[string]bool
+	allowColumns              map[string]bool
 	ignoreColumns             map[string]bool
 }
 

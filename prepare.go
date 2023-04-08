@@ -2,6 +2,7 @@ package sqltool
 
 import (
 	"encoding/json"
+	"fmt"
 	"reflect"
 	"time"
 
@@ -99,6 +100,10 @@ func (st *SQLTool) parseColumns(i interface{}) {
 	st.column2FieldName = make(map[string]string, 0)
 	st.column2Type = make(map[string]reflect.Type, 0)
 
+	if len(st.allowColumns) > 0 && len(st.ignoreColumns) > 0 {
+		fmt.Println("[sqltool] allow columns opt has higher priority than ignore columns opt when scan struct")
+	}
+
 	t := reflect.TypeOf(i).Elem()
 	for index := 0; index < t.NumField(); index++ {
 		f := t.Field(index)
@@ -121,19 +126,35 @@ func (st *SQLTool) addColumnFieldNameAndType(column string, name string, typeV r
 }
 
 func (st *SQLTool) isIgnoreColumn(column string) bool {
-	if _, ok := st.autoCreateDateTimeColumns[column]; ok && st.actionType == insertAction {
-		return false
+	if _, ok := st.autoCreateDateTimeColumns[column]; ok {
+		if st.actionType == insertAction {
+			return false
+		}
+
+		return true
 	}
 
-	if _, ok := st.autoUpdateDateTimeColumns[column]; ok && (st.actionType == insertAction || st.actionType == updateAction) {
-		return false
-	}
+	if _, ok := st.autoUpdateDateTimeColumns[column]; ok {
+		if st.actionType == insertAction || st.actionType == updateAction {
+			return false
+		}
 
-	if _, ok := st.ignoreColumns[column]; ok {
 		return true
 	}
 
 	if column == st.serialColumn && (st.actionType == insertAction || st.actionType == updateAction) {
+		return true
+	}
+
+	if len(st.allowColumns) > 0 {
+		if _, ok := st.allowColumns[column]; ok {
+			return false
+		} else {
+			return true
+		}
+	}
+
+	if _, ok := st.ignoreColumns[column]; ok {
 		return true
 	}
 

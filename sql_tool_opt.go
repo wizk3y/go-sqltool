@@ -102,9 +102,31 @@ func (o autoUpdateDateTimeColumnsOpt) Apply(st *SQLTool) bool {
 	return true
 }
 
+type allowColumnsOpt []string
+
+// AllowColumnsOpt -- allow columns when do query, this is priority than ignore when scan struct
+func AllowColumnsOpt(columns []string) sqlToolOpt {
+	return allowColumnsOpt(columns)
+}
+
+func (o allowColumnsOpt) Apply(st *SQLTool) bool {
+	mapColumns := make(map[string]bool)
+
+	for _, c := range o {
+		mapColumns[c] = true
+	}
+
+	if reflect.DeepEqual(mapColumns, st.allowColumns) {
+		return false
+	}
+
+	st.allowColumns = mapColumns
+	return true
+}
+
 type ignoreColumnsOpt []string
 
-// IgnoreColumnsOpt -- ignore columns when do select query
+// IgnoreColumnsOpt -- ignore columns when do query
 func IgnoreColumnsOpt(columns []string) sqlToolOpt {
 	return ignoreColumnsOpt(columns)
 }
